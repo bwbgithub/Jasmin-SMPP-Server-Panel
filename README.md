@@ -1,7 +1,9 @@
 # Jasmin SMPP Panel (Server)
-Jasmin SMPP Panel for Jasmin SMS Gateway. Need to setup contact with **skype: helios-sw**
+Jasmin SMPP Panel for Jasmin SMS Gateway. Need to setup contact with **skype: anik_arif**
 
-# Technology Stack
+
+# Jasmin SMPP Panel (Server)
+Jasmin SMPP Panel for Jasmin SMS Gateway.
 - Ubuntu 18.04.3 LTS
 - Django
 - Apache
@@ -37,12 +39,11 @@ sudo apt -y autoclean
 sudo apt -y clean 
 sudo apt update
 sudo reboot
-```
+
 
 ***2nd Phase***
 Install Apache+clone repository to /var/www/:
 
-```shell
 sudo apt update
 sudo apt-get install apache2 libapache2-mod-wsgi
 sudo ufw allow 'Apache'
@@ -59,7 +60,72 @@ sudo pip install -r requirements.pip
 sudo ./manage.py migrate 
 sudo ./manage.py createsuperuser 
 sudo ./manage.py collectstatic
-```
+
+If you are running the production server (see below) rather than the Django dev server. It should be run again on any upgrade that changes static files. If in doubt, run it.
+
+You can also override the default settings for the telnet connection in var/www/html/main/local_settings.py. These settings with their defaults are:
+
+
+TELNET_HOST = '127.0.0.1'
+TELNET_PORT = 8990
+TELNET_USERNAME = 'root'
+TELNET_PW = 'password'
+
 ## Running
+
+To run for testing and development: 
+
+sudo python manage.py runserver [::]:8000
+
+
+
+***3rd Phase***
+## Deployment
+To run on production:
+
+cp 000-default.conf /etc/apache2/sites-available/000-default.conf
+sudo a2enmod wsgi
+sudo a2ensite 000-default.conf
+sudo service apache2 restart
+sudo chmod a+w db.sqlite3
+cd ..
+sudo chown root:root html
+sudo service apache2 restart
+sudo chown www-data:www-data html
+cd html
+sudo chown www-data:www-data db.sqlite3 
+sudo service apache2 reload
+
+
+## visit
 http://localhost/
+
+##Configration 
+/etc/apache2/sites-available/000-default.conf
+
+
+<VirtualHost *:80>
+ServerName example.com
+ServerAlias www.example.com
+ServerAdmin webmaster@localhost
+DocumentRoot /var/www/html
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+<Directory /var/www/html>
+<Files django.wsgi>
+Require all granted
+</Files>
+</Directory>
+WSGIDaemonProcess html python-path=/var/www/html:/var/www/html/env/lib/python2.7/site-packages
+WSGIProcessGroup html
+WSGIScriptAlias / /var/www/html/main/wsgi.py
+Alias /static /var/www/html/static/
+</VirtualHost>
+
+
+
+
+video tutorial
+https://www.youtube.com/watch?v=MkawvVse_oY
 
